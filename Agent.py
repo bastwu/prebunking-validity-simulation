@@ -88,51 +88,42 @@ class Agent:
         """
         Based on the neighbouring nodes, the status of the node under consideration is updated
         """
-        if not self.resistance:
-            all_opinions = []
-            for friend in self.friends:
-                all_opinions.extend(friend.engagement)
+        if self.resistance:
+            self.next_opinion = self.opinion  # If resistant, nothing changes
+            return
 
-            count = Counter(all_opinions)
+        # Get all opinion from friends
+        all_opinions = []
+        for friend in self.friends:
+            all_opinions.extend(friend.engagement)
+        count = Counter(all_opinions)
 
-            if not self.resistance:
-                n_1 = count.get(1)
-
-                if n_1:
-                    prop = n_1 / len(all_opinions)
-
-                    if prop > self.prop_1:
-                        self.next_opinion = 1  # Disinformation
-                        self.status = "I"  # Infected
-                        self.resistance = True
-
-                    else:
-                        self.next_opinion = self.opinion
-
-                else:
-                    self.next_opinion = self.opinion
-
+        # Handle disinformation logic (opinion 1)
+        n_1 = count.get(1)
+        if n_1:
+            prop = n_1 / len(all_opinions)
+            if prop > self.prop_1:
+                self.next_opinion = 1  # Disinformation
+                self.status = "I"  # Infected
+                self.resistance = True
             else:
                 self.next_opinion = self.opinion
+        else:
+            self.next_opinion = self.opinion
 
-            n_2 = count.get(2)
+        # Handle fact-checking logic (opinion 2)
+        n_2 = count.get(2)
+        if n_2:
+            if rand.random() < self.prop_2:  # Will an Agent be immunised?
+                self.resistance = True
+                self.status = "R"
+                self.next_opinion = 0
 
-            if n_2:
-
-                if not self.resistance:
-
-                    if rand.random() < self.prop_2:  # Will an Agent be immunised?
-                        self.resistance = True
-                        self.status = "R"
-                        self.next_opinion = 0
-
-                        if rand.random() < self.prop_vax:  # Will an Agent be immunised AND shares prebunking content?
-                            self.next_opinion = 2
-                            self.status = 'aR'
-
-                    else:
-                        self.next_opinion = self.opinion
-
+                if rand.random() < self.prop_vax:  # Will an Agent be immunised AND shares prebunking content?
+                    self.next_opinion = 2
+                    self.status = 'aR'
+            else:
+                self.next_opinion = self.opinion
         else:
             self.next_opinion = self.opinion
 
