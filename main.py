@@ -9,7 +9,7 @@ if __name__ == '__main__':
         n_ticks=100,
         n_friends=5,
         n_add=5,
-        share_prob=.5,
+        prob_share=.5,
 
         attack_start=5,
         attack_kind=1,
@@ -19,7 +19,7 @@ if __name__ == '__main__':
         dark_quantile=.75,
 
         prebunk_prob=.3,
-        vax_prob=.1,
+        prob_immune=.1,
         # draw = False,
         verbose=False,
         node_mult=25,
