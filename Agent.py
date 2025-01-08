@@ -16,7 +16,7 @@ class Agent:
     and can output their network information
     """
 
-    def __init__(self, opinion=0, status="S", shares=.5, frequency=1, resistance=False, dark=False):
+    def __init__(self, prob_prebunk, node_id, prob_share_opinion, prob_immune, opinion=0, status="S", frequency=1, resistance=False, dark=False):
         """
         [default]
         opinion: (int)
@@ -27,9 +27,8 @@ class Agent:
             ["S"]: susceptible
             "I": infected
             "R": resistant
-        share: (bool)
-            [True]: can share their opinion
-            False: can't share their opinion
+        prob_share_opinion: (float)
+            probability to share a node's opinion with its neighbour
         frequency: (int)
             [1]: how often the opinion is shared per share call
         resistance: (bool)
@@ -39,9 +38,10 @@ class Agent:
             True: is a 'dark agent' that can trigger disinformation campaigns
             [False]: not a dark agent
         """
+        self.prob_prebunk = prob_prebunk
         self.opinion = opinion
         self.status = status
-        self.shares = shares
+        self.prob_share_opinion = prob_share_opinion
         self.frequency = frequency
         self.resistance = resistance
 
@@ -50,12 +50,12 @@ class Agent:
         self.pause = False
         self.attack_frequency = 50
 
-        self.prop_1 = .5
-        self.prop_2 = 1
-        self.prop_vax = 0
+        self.prob_disinfo = .5 # probability to become a disinformation agent
+        #self.prob_prebunk = 1 # probability to become a prebunking agent
+        self.prob_immune = prob_immune # probability to become immunized against disinformation
 
         self.friends = []
-        self.node_id = None
+        self.node_id = node_id
 
         self.opinion_history = []
         self.engagement = []
@@ -71,7 +71,7 @@ class Agent:
 
         self.engagement = []
 
-        if rand.random() <= self.shares:
+        if rand.random() <= self.prob_share_opinion:
             if self.opinion == 0:
                 # no opinion
                 self.engagement = [0 for _ in range(self.frequency)]
@@ -101,31 +101,35 @@ class Agent:
         # Handle disinformation logic (opinion 1)
         n_1 = count.get(1)
         if n_1:
-            prop = n_1 / len(all_opinions)
-            if prop > self.prop_1:
+            prob = n_1 / len(all_opinions)
+            if prob > self.prob_disinfo:
                 self.next_opinion = 1  # Disinformation
                 self.status = "I"  # Infected
                 self.resistance = True
-            else:
-                self.next_opinion = self.opinion
-        else:
-            self.next_opinion = self.opinion
+                return
+        #     else:
+        #         self.next_opinion = self.opinion
+        # else:
+        #     self.next_opinion = self.opinion
 
         # Handle fact-checking logic (opinion 2)
         n_2 = count.get(2)
         if n_2:
-            if rand.random() < self.prop_2:  # Will an Agent be immunised?
+            if rand.random() < self.prob_prebunk:  # Will an Agent be immunised?
                 self.resistance = True
                 self.status = "R"
                 self.next_opinion = 0
 
-                if rand.random() < self.prop_vax:  # Will an Agent be immunised AND shares prebunking content?
+                if rand.random() < self.prob_immune:  # Will an Agent be immunised AND shares prebunking content?
                     self.next_opinion = 2
                     self.status = 'aR'
-            else:
-                self.next_opinion = self.opinion
-        else:
-            self.next_opinion = self.opinion
+                return
+        #     else:
+        #         self.next_opinion = self.opinion
+        # else:
+        #     self.next_opinion = self.opinion
+
+        self.next_opinion = self.opinion
 
     def update_opinion(self):
         """
@@ -267,7 +271,7 @@ class Agent:
         if kind == 'dark':
             self.opinion = 1
             self.status = 'uI'
-            self.shares = 1
+            self.prob_share_opinion = 1
             self.frequency = 1
             self.resistance = True
             self.dark = True
@@ -276,7 +280,7 @@ class Agent:
         elif kind == 'light':
             self.opinion = 2
             self.status = 'aR'
-            self.shares = 1
+            self.prob_share_opinion = 1
             self.frequency = 1
             self.resistance = True
             self.dark = False
