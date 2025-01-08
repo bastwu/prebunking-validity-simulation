@@ -7,85 +7,22 @@ import matplotlib.gridspec as gridspec
 from collections import Counter
 import Agent
 
-def run_model(
-        pop_size=100,
-        n_ticks=20,
-        n_friends=5,
-        n_add=5, #TODO: Why 5???
-        share_prob=.5,
 
-        attack_start=5,
-        attack_kind=0,
-        atk_len=5,
-        atk_str=50,
-        decay=10,
-        dark_quantile=.75,
-
-        prebunk_prob=1.0,
-        vax_prob=0.0,
-
-        node_mult=50,
-
-        draw=True,
-        verbose=True,
-
-        custom_title='Title',
-        file_name='savefig'
-):
-    """
-    Simulate the user network with the defined properties
-    [default]
-    pop_size: (int)
-        [100]:number of the nodes in the user networks
-    n_ticks: (int)
-        [20]: number of time steps conducted in the simulation
-    n_friends: (int)
-        [5]: maximum number of friends a user can have
-    n_add: (int)
-        [5]: Number of times an agent to which an edge is established should be added to the list of already selected target agents
-    share_prob: (float)
-        [0.5]: probability to share a node's opinion with its neighbour
-    attack_start: (int)
-        [5]: time step when the attacks start
-    attack_kind: (int)
-        [0]: type of attack executed by the dark agents, i.e., which kind of stereotype is used as blueprint
-    atk_len: (int)
-        [5]: time steps the attack lasts
-    atk_str: (int)
-        [50]: number of messages shared during an attack
-    decay: (int)
-        [10]: decrease of attack intensity depending on which stereotype is used as blueprint for the dark agent's behavior
-    dark_quantile: (float)
-        [0.75]: percentile of in-degrees of edges that determines which node is the dark agent
-    prebunk_prob: (float)
-        [1.0]: a node's probability to become a prebunking agent themselves
-    vax_prob: (float)
-        [0.0]: a node's probability to change their status to resistant
-    node_mult: ()
-        [5]: magnification factor of nodes in the plot
-    draw: (bool)
-        [True]: after the simulation concluded, should a plot be created?
-    verbose: (bool)
-        [True]: should the status of the simulation be updated in the console?
-    custom_title: (str)
-        ['Title']: the title of the plot
-    file_name: (str)
-        ['savefig']: the name of the file the plot is stored into
-    """
+def create_population(verbose, pop_size, prob_share, prebunk_prob, prob_immune, n_friends, n_add, dark_quantile,
+                      atk_str, draw, node_mult):
     # Create the population
     if verbose:
         print('initializing population')
 
     population = []
-    chosen = [] # helper List for already chosen Agents as friends
-    for i in range(pop_size): #
-        agent = Agent.Agent()
-        agent.node_id = i
-        agent.shares = share_prob
-        agent.prop_2 = prebunk_prob
-        agent.prop_vax = vax_prob
+    chosen = []  # helper List for already chosen Agents as friends
+    for i in range(pop_size):  #
+        node_id = i
+        shares = prob_share
+        agent = Agent.Agent(prebunk_prob, node_id, shares, prob_immune)
+
         population.append(agent)
-        chosen.append(agent) # At the beginning every Agent exists exactly one time in the chosen-list
+        chosen.append(agent)  # At the beginning every Agent exists exactly one time in the chosen-list
 
     if verbose:
         print('initializing friends')
@@ -101,7 +38,8 @@ def run_model(
                 else:
                     agent.friends.append(fr)
                     for k in range(n_add):
-                        chosen.append(fr) # If an agent is chosen as a friend, the agent is added 5 more times to the chosen-list (because of 'preferential attachment')
+                        chosen.append(
+                            fr)  # If an agent is chosen as a friend, the agent is added 5 more times to the chosen-list (because of 'preferential attachment')
 
     if verbose:
         print('initializing light and dark')
@@ -109,15 +47,15 @@ def run_model(
 
     c = Counter(chosen)
     n_list = []
-    for k in c.keys(): # k should be an agent
-        n_list.append(c[k]) # n_list is just a list of each agents number of incoming edges
+    for k in c.keys():  # k should be an agent
+        n_list.append(c[k])  # n_list is just a list of each agents number of incoming edges
     med_in = np.quantile(n_list, dark_quantile, method='nearest')
     m_list = []
     for k in c.keys():
         if c[k] == med_in:
             m_list.append(k)
 
-    dark = rand.choice(m_list) # choose an Agent as dark Agent from the List of agents within the 0.75 quantile
+    dark = rand.choice(m_list)  # choose an Agent as dark Agent from the List of agents within the 0.75 quantile
 
     light.alter_agent('light')
     dark.alter_agent('dark', attack_strength=atk_str)
@@ -201,6 +139,84 @@ def run_model(
 
     if verbose:
         print('run model')
+
+    return population, n_s, n_i, n_r, n_ui, n_ar, e_s, e_i, e_r, fig, gs, lay
+
+
+def run_model(
+        pop_size=100,
+        n_ticks=20,
+        n_friends=5,
+        n_add=5,
+        prob_share=.5,
+
+        attack_start=5,
+        attack_kind=0,
+        atk_len=5,
+        atk_str=50,
+        decay=10,
+        dark_quantile=.75,
+
+        prebunk_prob=1.0,
+        prob_immune=0.0,
+
+        # For graphics
+        node_mult=50,
+
+        draw=True,
+        verbose=True,
+
+        custom_title='Title',
+        file_name='savefig'
+):
+    """
+    Simulate the user network with the defined properties
+    [default]
+    pop_size: (int)
+        [100]:number of the nodes in the user networks
+    n_ticks: (int)
+        [20]: number of time steps conducted in the simulation
+    n_friends: (int)
+        [5]: maximum number of friends a user can have
+    n_add: (int)
+        [5]: Number of times an agent to which an edge is established should be added to the list of already selected target agents
+    prob_share: (float)
+        [0.5]: probability to share a node's opinion with its neighbour
+    attack_start: (int)
+        [5]: time step when the attacks start
+    attack_kind: (int)
+        [0]: type of attack executed by the dark agents, i.e., which kind of stereotype is used as blueprint
+    atk_len: (int)
+        [5]: time steps the attack lasts
+    atk_str: (int)
+        [50]: number of messages shared during an attack
+    decay: (int)
+        [10]: decrease of attack intensity depending on which stereotype is used as blueprint for the dark agent's behavior
+    dark_quantile: (float)
+        [0.75]: percentile of in-degrees of edges that determines which node is the dark agent
+    prebunk_prob: (float)
+        [1.0]: a node's probability to become a prebunking agent themselves
+    prob_immune: (float)
+        [0.0]: a node's probability to change their status to resistant
+    node_mult: ()
+        [5]: magnification factor of nodes in the plot
+    draw: (bool)
+        [True]: after the simulation concluded, should a plot be created?
+    verbose: (bool)
+        [True]: should the status of the simulation be updated in the console?
+    custom_title: (str)
+        ['Title']: the title of the plot
+    file_name: (str)
+        ['savefig']: the name of the file the plot is stored into
+    """
+    population, n_s, n_i, n_r, n_ui, n_ar, e_s, e_i, e_r, fig, gs, lay = create_population(verbose, pop_size,
+                                                                                           prob_share,
+                                                                                           prebunk_prob, prob_immune,
+                                                                                           n_friends,
+                                                                                           n_add,
+                                                                                           dark_quantile, atk_str, draw,
+                                                                                           node_mult)
+
     for tick in range(n_ticks):
 
         for agent in population:
@@ -298,8 +314,10 @@ def run_model(
         net_legend = fig.add_subplot(gs[2])
         legend_elements = [
             lines.Line2D([0], [0], marker='o', color='w', markerfacecolor='grey', markersize=15, label='susceptible'),
-            lines.Line2D([0], [0], marker='o', color='w', markerfacecolor='darkgreen', markersize=15, label='prebunking agent'),
-            lines.Line2D([0], [0], marker='o', color='w', markerfacecolor='lightgreen', markersize=15, label='immunized'),
+            lines.Line2D([0], [0], marker='o', color='w', markerfacecolor='darkgreen', markersize=15,
+                         label='prebunking agent'),
+            lines.Line2D([0], [0], marker='o', color='w', markerfacecolor='lightgreen', markersize=15,
+                         label='immunized'),
             lines.Line2D([0], [0], marker='o', color='w', markerfacecolor='darkred', markersize=15, label='dark agent'),
             lines.Line2D([0], [0], marker='o', color='w', markerfacecolor='pink', markersize=15, label='infected'),
         ]
@@ -347,6 +365,12 @@ def run_model(
         n_agents_legend.legend(handles=legend_elements, loc='upper left')
         n_agents_legend.axis('off')
 
+    if draw:
+        fig.suptitle(custom_title)
+        fig.tight_layout()
+
+        fig.savefig(file_name, dpi=300)
+
     count_s = 0
     count_i = 0
     count_r = 0
@@ -375,17 +399,12 @@ def run_model(
         dark_quantile=dark_quantile,
 
         prebunk_prob=prebunk_prob,
-        vax_prob=vax_prob,
+        vax_prob=prob_immune,
 
         n_s=count_s,
         n_i=count_i,
         n_r=count_r
     )
-    if draw:
-        fig.suptitle(custom_title)
-        fig.tight_layout()
-
-        fig.savefig(file_name, dpi=300)
 
     if verbose:
         print(info_dict)
