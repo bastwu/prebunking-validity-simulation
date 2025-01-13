@@ -221,7 +221,7 @@ def run_model(
 
         for agent in population:
             if agent.dark:
-                agent.attack(tick=tick, kind=attack_kind, start=5, attack_length=atk_len, decay=decay)
+                agent.attack(tick=tick, kind=attack_kind, start=5)
             else:
                 agent.share()
 
