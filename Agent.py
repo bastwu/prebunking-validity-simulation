@@ -1,7 +1,6 @@
 import random as rand
 from collections import Counter
 
-
 class Agent:
     """
     Initializes an agent with
@@ -63,12 +62,8 @@ class Agent:
 
     def share(self):
         """
-        Defines the sharing behavior of nodes:
-        Either has no opinion,
-        shares disinformation,
-        or fact checking information
+        Defines the sharing behavior of nodes: Either has no opinion, shares disinformation, or fact checking information
         """
-
         self.engagement = []
 
         if rand.random() <= self.prob_share_opinion:
@@ -107,10 +102,6 @@ class Agent:
                 self.status = "I"  # Infected
                 self.resistance = True
                 return
-        #     else:
-        #         self.next_opinion = self.opinion
-        # else:
-        #     self.next_opinion = self.opinion
 
         # Handle fact-checking logic (opinion 2)
         n_2 = count.get(2)
@@ -124,10 +115,6 @@ class Agent:
                     self.next_opinion = 2
                     self.status = 'aR'
                 return
-        #     else:
-        #         self.next_opinion = self.opinion
-        # else:
-        #     self.next_opinion = self.opinion
 
         self.next_opinion = self.opinion
 
@@ -142,7 +129,6 @@ class Agent:
         """
         Status of the node that can be requested.
         """
-
         return (
             self.node_id,
             dict(
@@ -167,107 +153,58 @@ class Agent:
 
         return tie_list
 
-    def attack(self, tick, kind=0, start=5, attack_length=5, decay=10):
+    def attack(self, tick, kind, start):
+
         """
-        [default]
-        tick: (int)
-            time steps in the model
-        kind: (int)
-            [0]: node shares no opinion
-            1: node shares disinformation
-            2: node shares fact-checking
-        start: (int)
-            [5]: beginning of the attack at time step
-        attack_length: (int)
-            [5]: duration of an attack in time steps
-        decay: (int)
-            [10]: decrease of attack intensity depending on which stereotype is used as blueprint for the dark agent's behavior
+        Executes an attack based on the given attack type (kind) and simulation step (tick), starting at given
+        simulation step (start).
         """
-        if self.dark:
-
-            if kind == 0:  # Attack scenario 1: One single step with 50 times sharing (with p=0.5)
+    #if self.dark:
+        match kind:
+            case 0: # Scenario 1: One single step with 50 times sharing
                 if tick == start:
-                    self.frequency = self.attack_frequency
+                    self.frequency = 50
+                    self.share()
+                    self.frequency = 1
+                    return
+                self.share()
+            case 1: # Scenario 2: With an increasing volume(10, 30, and 50 times) over three steps with a step of
+                    # normal sharing behavior in between the attack steps
+                if tick == start:
+                    self.frequency = 10
+                    self.share()
+                    self.frequency = 1
+                elif tick == start + 2:
+                    self.frequency = 30
+                    self.share()
+                    self.frequency = 1
+                elif tick == start + 4:
+                    self.frequency = 50
                     self.share()
                     self.frequency = 1
                 else:
                     self.share()
-
-            elif kind == 1:  # Attack Scenario 2: The dark agent shares disinformation with an increasing volume
-                # (10, 30, and 50 times) during three steps with a step of normal sharing behavior in between the attack steps.
-                if tick == start:
-                    self.active_attack = attack_length - 1
-                    freq = self.attack_frequency
-                    for a in range(self.active_attack):
-                        if freq > 0:
-                            freq -= decay
-                    self.attack_frequency = freq
-                    self.frequency = self.attack_frequency
-                    self.share()
-                    self.frequency = 1
-                    self.pause = True
-
+            case 2: # Scenario 3: Frequency decreases over 5 steps, each step 2 ticks long (50, 40 ,30, 20, 10) Times
+                frequency_values = [50, 50, 40, 40, 30, 30, 20, 20, 10, 10]
+                if tick < len(frequency_values) + start:
+                    actual_value = frequency_values[tick - start]
+                    self.frequency = actual_value
                 else:
-                    if self.active_attack:
-                        if self.pause:
-                            self.share()
-                            self.pause = False
-                        else:
-                            self.attack_frequency += decay
-                            self.frequency = self.attack_frequency
-                            self.share()
-                            self.frequency = 1
-                            self.pause = True
-                            self.active_attack -= 1
-                            if self.active_attack < 1:
-                                self.active_attack = False
-                    else:
-                        self.share()
-
-            elif kind == 2:  # Attack scenario 3
-                if tick == start:
-                    self.active_attack = attack_length - 1
-                    self.frequency = self.attack_frequency
-                    self.share()
                     self.frequency = 1
-                    self.pause = True
 
-                else:
-                    if self.active_attack:
-                        if self.pause:
-                            self.frequency = self.attack_frequency
-                            self.share()
-                            self.frequency = 1
-                            self.pause = False
-                        else:
-                            if self.attack_frequency > 0:
-                                self.attack_frequency -= decay
-
-                            self.frequency = self.attack_frequency
-                            self.share()
-                            self.frequency = 1
-                            self.pause = True
-                            self.active_attack -= 1
-                            if self.active_attack < 1:
-                                self.active_attack = False
-                    else:
-                        self.share()
-
-            else:
+                self.share()
+            case _: # Default behaviour
                 self.share()
 
     def alter_agent(self, kind='dark', attack_strength=50):
         """
         Change the status of the agent
-        [default]
         kind: (str)
             ['dark']: dark agent type
             'light': fact-checking sharing agent
-
         attack_strength: (int)
             [50]: intensity of the attack
         """
-
         if kind == 'dark':
             self.opinion = 1
             self.status = 'uI'
