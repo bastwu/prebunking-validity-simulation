@@ -196,7 +196,7 @@ class Agent:
             case _: # Default behaviour
                 self.share()
 
-    def alter_agent(self, kind='dark', attack_strength=50):
+    def alter_agent(self, kind):
         """
         Change the status of the agent
         kind: (str)
@@ -212,7 +212,6 @@ class Agent:
             self.frequency = 1
             self.resistance = True
             self.dark = True
-            self.attack_frequency = attack_strength
 
         elif kind == 'light':
             self.opinion = 2
