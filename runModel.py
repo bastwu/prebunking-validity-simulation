@@ -4,51 +4,41 @@ from collections import Counter
 import Agent
 from plotResults import draw_plot, get_network
 
-def create_population(verbose, pop_size, prob_share, prebunk_prob, prob_immune, n_friends, n_add, dark_quantile):
-    # Create the population
+
+def create_population(verbose, pop_size, prob_share, prob_prebunk, prob_immune, n_friends, n_add, dark_quantile):
     if verbose:
-        print('initializing population')
+        print('Initializing population...')
 
     population = []
-    chosen = []  # helper List for already chosen Agents as friends
-    for i in range(pop_size):  #
-        node_id = i
-        shares = prob_share
-        agent = Agent.Agent(prebunk_prob, node_id, shares, prob_immune)
-
+    for i in range(pop_size):
+        agent = Agent.Agent(prob_prebunk, node_id=i, prob_share_opinion=prob_share, prob_immune=prob_immune)
         population.append(agent)
-        chosen.append(agent)  # At the beginning every Agent exists exactly one time in the chosen-list
+
+    chosen = population.copy()  # Helper List for already chosen Agents as friends;at the beginning every Agent exists
+    # exactly one time in the chosen-list
 
     if verbose:
         print('initializing friends')
+
     for i in range(n_friends):
         for agent in population:
             n_friends = i + 1
             while len(agent.friends) < n_friends:
                 fr = rand.choice(chosen)
-                if fr == agent:
-                    continue
-                elif fr in agent.friends:
-                    continue
-                else:
+                if fr != agent and fr not in agent.friends:
                     agent.friends.append(fr)
-                    for k in range(n_add):
-                        chosen.append(
-                            fr)  # If an agent is chosen as a friend, the agent is added 5 more times to the chosen-list (because of 'preferential attachment')
+                    # If an agent is chosen as a friend, the agent is added 5 more times to the chosen-list
+                    # (because of 'preferential attachment'):
+                    chosen.extend([fr] * n_add)
 
     if verbose:
         print('initializing light and dark')
     light = Counter(chosen).most_common(1)[0][0]
 
-    c = Counter(chosen)
-    n_list = []
-    for k in c.keys():  # k should be an agent
-        n_list.append(c[k])  # n_list is just a list of each agents number of incoming edges
+    incoming_edges = Counter(chosen)
+    n_list = list(incoming_edges.values())
     med_in = np.quantile(n_list, dark_quantile, method='nearest')
-    m_list = []
-    for k in c.keys():
-        if c[k] == med_in:
-            m_list.append(k)
+    m_list = [c for c, v in incoming_edges.items() if v == med_in]
 
     dark = rand.choice(m_list)  # choose an Agent as dark Agent from the List of agents within the 0.75 quantile
 
@@ -87,23 +77,26 @@ def get_opinion_shares_and_agent_proportion(population):
 
     return es, ei, er, ns, ni, nr, nar, nui
 
+
 def run_model(
-        pop_size=100,
-        n_ticks=20,
-        n_friends=5,
-        n_add=5,
-        prob_share=.5,
+        pop_size,
+        n_ticks,
+        n_friends,
+        n_add,
+        prob_share_indifferent,
+        prob_share_disinfo,
+        prob_share_facts,
 
-        attack_start=5,
-        attack_kind=0,
-        dark_quantile=.75,
+        attack_start,
+        attack_kind,
+        dark_quantile,
 
-        prob_prebunk=1.0,
-        prob_immune=0.0,
+        prob_prebunk,
+        prob_immune,
 
-        draw=True,
-        verbose=True,
-
+        draw=False,
+        verbose=False,
+        dry_run=False,
         custom_title='Title',
         file_name='savefig'
 ):
@@ -143,10 +136,19 @@ def run_model(
     file_name: (str)
         ['savefig']: the name of the file the plot is stored into
     """
+    if dry_run:
+        print('Dry run with: ', 'Size: ',pop_size, 'Ticks: ',n_ticks,
+              'Sharing: ',prob_share_indifferent, prob_share_disinfo, prob_share_facts,
+              'Attack: ',attack_kind,
+              'Dark quant: ',dark_quantile,
+              'Prob pre: ',prob_prebunk,
+              'Prob imu: ',prob_immune)
+        return {}, {}, {}
+
     if verbose:
         print('create population')
     population = create_population(verbose, pop_size,
-                                   prob_share,
+                                   prob_share_indifferent,
                                    prob_prebunk, prob_immune,
                                    n_friends,
                                    n_add,
@@ -187,7 +189,7 @@ def run_model(
             agent.check_friends()
 
         for agent in population:
-            agent.update_opinion()
+            agent.update_opinion(prob_share_indifferent, prob_share_disinfo, prob_share_facts)
 
     if draw:
         end_node_list, end_tie_list = get_network(population)
@@ -200,25 +202,26 @@ def run_model(
     count_i = n_i[-1] + n_ui[-1]
     count_r = n_r[-1] + n_ar[-1]
 
-    info_dict = dict(
-        pop_size=pop_size,
-        n_ticks=n_ticks,
-        n_friends=n_friends,
-        n_add=n_add,
-
-        attack_start=attack_start,
-        attack_kind=attack_kind,
-        dark_quantile=dark_quantile,
-
-        prebunk_prob=prob_prebunk,
-        vax_prob=prob_immune,
-
+    info_dict_end = dict(
         n_s=count_s,
         n_i=count_i,
         n_r=count_r
     )
+    info_dict_shares = dict(
+        s=e_s,
+        i=e_i,
+        r=e_r
+    )
+
+    info_dict_status = dict(
+        s=n_s,
+        i=n_i,
+        r=n_r,
+        ar=n_ar,
+        ui=n_ui
+    )
 
     if verbose:
-        print(info_dict)
+        print(info_dict_end)
 
-    return info_dict
+    return info_dict_end, info_dict_shares, info_dict_status
