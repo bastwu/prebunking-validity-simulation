@@ -67,17 +67,7 @@ class Agent:
         self.engagement = []
 
         if rand.random() <= self.prob_share_opinion:
-            if self.opinion == 0:
-                # no opinion
-                self.engagement = [0 for _ in range(self.frequency)]
-            elif self.opinion == 2:
-                # Fact checking
-                self.engagement = [2 for _ in range(self.frequency)]
-            elif self.opinion == 1:
-                # Disinformation
-                self.engagement = [1 for _ in range(self.frequency)]
-            else:
-                raise ValueError
+            self.engagement = [self.opinion for _ in range(self.frequency)]
 
     def check_friends(self):
         """
@@ -118,12 +108,25 @@ class Agent:
 
         self.next_opinion = self.opinion
 
-    def update_opinion(self):
+    def update_opinion(self, prob_share_indifferent, prob_share_disinfo, prob_share_facts):
         """
-        Records and changes the opinion of the node (from no opinion to either infected or resistant)
+        Records and changes the opinion of the node (from no opinion to either infected or resistant) and also the
+        probability to share opinion with its friends based on its opinion.
         """
         self.opinion_history.append(self.opinion)
         self.opinion = self.next_opinion
+        if self.dark:
+            return
+        # Update sharing behaviour
+        if self.opinion == 0:
+            # no opinion
+            self.prob_share_opinion = prob_share_indifferent
+        elif self.opinion == 1:
+            # Disinformation
+            self.prob_share_opinion = prob_share_disinfo
+        elif self.opinion == 2:
+            # Fact checking
+            self.prob_share_opinion = prob_share_facts
 
     def node_output(self):
         """
@@ -154,7 +157,6 @@ class Agent:
         return tie_list
 
     def attack(self, tick, kind, start):
-
         """
         Executes an attack based on the given attack type (kind) and simulation step (tick), starting at given
         simulation step (start).
