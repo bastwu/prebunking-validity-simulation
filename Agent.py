@@ -17,7 +17,14 @@ class Agent:
 
     def __init__(self, prob_prebunk, node_id, prob_share_opinion, prob_immune, opinion=0, status="S", frequency=1, resistance=False, dark=False):
         """
-        [default]
+        prob_prebunk: (float)
+            probability of becoming a prebunker
+        node_id: (int)
+            unique id of the agent
+        prob_share_opinion: (float)
+            probability of share opinion
+        prob_immune: (float)
+            probability of becoming immune against disinformation
         opinion: (int)
             [0]: no opinion
             1: disinformation
@@ -26,8 +33,6 @@ class Agent:
             ["S"]: susceptible
             "I": infected
             "R": resistant
-        prob_share_opinion: (float)
-            probability to share a node's opinion with its neighbour
         frequency: (int)
             [1]: how often the opinion is shared per share call
         resistance: (bool)
@@ -38,24 +43,17 @@ class Agent:
             [False]: not a dark agent
         """
         self.prob_prebunk = prob_prebunk
+        self.node_id = node_id
+        self.prob_share_opinion = prob_share_opinion
+        self.prob_immune = prob_immune
         self.opinion = opinion
         self.status = status
-        self.prob_share_opinion = prob_share_opinion
         self.frequency = frequency
         self.resistance = resistance
-
         self.dark = dark
-        self.active_attack = False
-        self.pause = False
-        self.attack_frequency = 50
 
-        self.prob_disinfo = .5 # probability to become a disinformation agent
-        #self.prob_prebunk = 1 # probability to become a prebunking agent
-        self.prob_immune = prob_immune # probability to become immunized against disinformation
-
+        self.share_friends_opinion = .5 # probability to become a disinformation agent, based on friends opinion
         self.friends = []
-        self.node_id = node_id
-
         self.opinion_history = []
         self.engagement = []
         self.next_opinion = False
@@ -87,7 +85,7 @@ class Agent:
         n_1 = count.get(1)
         if n_1:
             prob = n_1 / len(all_opinions)
-            if prob > self.prob_disinfo:
+            if prob > self.share_friends_opinion:
                 self.next_opinion = 1  # Disinformation
                 self.status = "I"  # Infected
                 self.resistance = True

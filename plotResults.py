@@ -4,7 +4,6 @@ from matplotlib import pyplot as plt, gridspec as gridspec, lines as lines
 
 def draw_plot(node_list_start, tie_list_start, node_list_end, tie_list_end, e_s, e_i, e_r, n_s, n_i, n_r, n_ar, n_ui,
               custom_title, file_name):
-    # only for plotting/drawing purpose
     node_mult = 25  # magnification factor of nodes in the plot
 
     start_network = nx.DiGraph()

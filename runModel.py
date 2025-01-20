@@ -5,13 +5,14 @@ import Agent
 from plotResults import draw_plot, get_network
 
 
-def create_population(verbose, pop_size, prob_share, prob_prebunk, prob_immune, n_friends, n_add, dark_quantile):
+def create_population(verbose, pop_size, prob_share_indifferent, prob_prebunk, prob_immune, n_friends, n_add, dark_quantile):
+
     if verbose:
         print('Initializing population...')
 
     population = []
     for i in range(pop_size):
-        agent = Agent.Agent(prob_prebunk, node_id=i, prob_share_opinion=prob_share, prob_immune=prob_immune)
+        agent = Agent.Agent(prob_prebunk, i, prob_share_indifferent, prob_immune)
         population.append(agent)
 
     chosen = population.copy()  # Helper List for already chosen Agents as friends;at the beginning every Agent exists
@@ -104,45 +105,48 @@ def run_model(
     Simulate the user network with the defined properties
     [default]
     pop_size: (int)
-        [100]:number of the nodes in the user networks
+        number of the nodes in the user networks
     n_ticks: (int)
-        [20]: number of time steps conducted in the simulation
+        number of time steps conducted in the simulation
     n_friends: (int)
-        [5]: maximum number of friends a user can have
+        maximum number of friends a user can have
     n_add: (int)
-        [5]: Number of times an agent to which an edge is established should be added to the list of already selected target agents
-    prob_share: (float)
-        [0.5]: probability to share a node's opinion with its neighbour
+        Number of times an agent to which an edge is established should be added to the list of already selected target
+        agents (necessary for preferential attachment)
+    prob_share_indifferent: (float)
+        probability to share a node's opinion with its neighbour if its opinion is indifferent
+    prob_share_disinfo: (float)
+        probability to share a node's opinion with its neighbour if its opinion is disinformation
+    prob_share_facts: (float)
+        probability to share a node's opinion with its neighbour if its opinion is prebunking
     attack_start: (int)
-        [5]: time step when the attacks start
+        time step when the attacks start
     attack_kind: (int)
-        [0]: type of attack executed by the dark agents, i.e., which kind of stereotype is used as blueprint
-    atk_len: (int)
-        [5]: time steps the attack lasts
-    decay: (int)
-        [10]: decrease of attack intensity depending on which stereotype is used as blueprint for the dark agent's behavior
+        type of attack executed by the dark agents, i.e., which kind of stereotype is used as blueprint
     dark_quantile: (float)
-        [0.75]: percentile of in-degrees of edges that determines which node is the dark agent
-    prebunk_prob: (float)
-        [1.0]: a node's probability to become a prebunking agent themselves
+        percentile of in-degrees of edges that determines which node is the dark agent
+    prob_prebunk: (float)
+        a node's probability to become a prebunking agent themselves
     prob_immune: (float)
-        [0.0]: a node's probability to change their status to resistant
+        a node's probability to change their status to resistant
     draw: (bool)
-        [True]: after the simulation concluded, should a plot be created?
+        after the simulation concluded, should a plot be created?
     verbose: (bool)
-        [True]: should the status of the simulation be updated in the console?
+        should the status of the simulation be updated in the console?
+    dry_run: (bool)
+        for testing purposes, no run of the simulation, only for parameter testing
     custom_title: (str)
-        ['Title']: the title of the plot
+        the title of the plot
     file_name: (str)
-        ['savefig']: the name of the file the plot is stored into
+        the name of the file the plot is stored into
     """
     if dry_run:
-        print('Dry run with: ', 'Size: ',pop_size, 'Ticks: ',n_ticks,
-              'Sharing: ',prob_share_indifferent, prob_share_disinfo, prob_share_facts,
-              'Attack: ',attack_kind,
-              'Dark quant: ',dark_quantile,
-              'Prob pre: ',prob_prebunk,
-              'Prob imu: ',prob_immune)
+        print('Dry run with: ', 'Size: ', pop_size, 'Ticks: ', n_ticks,
+              'Sharing: ', prob_share_indifferent, prob_share_disinfo, prob_share_facts,
+              'Attack: ', attack_kind,
+              'Dark quant: ', dark_quantile,
+              'Prob pre: ', prob_prebunk,
+              'Prob imu: ', prob_immune)
         return {}, {}, {}
 
     if verbose:
@@ -181,7 +185,7 @@ def run_model(
 
         for agent in population:
             if agent.dark:
-                agent.attack(tick=tick, kind=attack_kind, start=5)
+                agent.attack(tick, attack_kind, attack_start)
             else:
                 agent.share()
 

@@ -1,10 +1,12 @@
 import numpy as np
 from runModel import run_model
 import pandas as pd
+import random as rand
 
 if __name__ == '__main__':
     dry_run = False
     run_counter = 0
+    rand.seed(311)
 
     for kind in range(3):
         attack_start = 5
