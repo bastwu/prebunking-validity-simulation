@@ -8,29 +8,28 @@ import random as rand
 if __name__ == '__main__':
     attack_kind = 0
     dry_run = False
-    run_counter = 0
     rand.seed(311)
     attack_start = 5
     print('Start Simulation for attack kind:', attack_kind)
 
     for prebunk in np.arange(0, 1.1, 0.1):
-        prob_prebunk = prebunk
+        prob_prebunk = round(prebunk, 1)
 
         for immune in np.arange(0, 1.1, 0.1):
-            prob_immune = immune
+            prob_immune = round(immune, 1)
 
             store_end_result = pd.DataFrame()
             store_shares_result = pd.DataFrame()
             store_status_result = pd.DataFrame()
 
             for indifferent in np.arange(0, 1.1, 0.1):
-                print('Prebunk:', prebunk, 'Immune:', immune, 'Indifferent:', indifferent)
-                prob_share_indifferent = indifferent
+                prob_share_indifferent = round(indifferent, 1)
+                print('Prebunk:', prebunk, 'Immune:', immune, 'Indifferent:', prob_share_indifferent)
                 for disinfo in np.arange(0, 1.1, 0.1):
-                    print('Disinfo:', disinfo)
-                    prob_share_disinfo = disinfo
+                    prob_share_disinfo = round(disinfo, 1)
+                    print('Disinfo:', prob_share_disinfo)
                     for facts in np.arange(0, 1.1, 0.1):
-                        prob_share_facts = facts
+                        prob_share_facts = round(facts, 1)
 
                         end_result_s = []
                         end_result_i = []
