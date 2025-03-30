@@ -15,16 +15,16 @@ class Agent:
     and can output their network information
     """
 
-    def __init__(self, prob_prebunk, node_id, prob_share_opinion, prob_immune, opinion=0, status="S", frequency=1, resistance=False, dark=False):
+    def __init__(self, prob_prebunk, node_id, prob_share_opinion, prob_immunize, opinion=0, status="S", frequency=1, resistance=False, dark=False, prebunk=False):
         """
         prob_prebunk: (float)
-            probability of becoming a prebunker
+            probability of becoming immune against disinformation
         node_id: (int)
             unique id of the agent
         prob_share_opinion: (float)
             probability of share opinion
-        prob_immune: (float)
-            probability of becoming immune against disinformation
+        prob_immunize: (float)
+            probability of becoming a prebunker
         opinion: (int)
             [0]: no opinion
             1: disinformation
@@ -45,12 +45,13 @@ class Agent:
         self.prob_prebunk = prob_prebunk
         self.node_id = node_id
         self.prob_share_opinion = prob_share_opinion
-        self.prob_immune = prob_immune
+        self.prob_immunize = prob_immunize
         self.opinion = opinion
         self.status = status
         self.frequency = frequency
         self.resistance = resistance
         self.dark = dark
+        self.prebunk = prebunk
 
         self.share_friends_opinion = .5 # probability to become a disinformation agent, based on friends opinion
         self.friends = []
@@ -99,7 +100,7 @@ class Agent:
                 self.status = "R"
                 self.next_opinion = 0
 
-                if rand.random() < self.prob_immune:  # Will an Agent be immunised AND shares prebunking content?
+                if rand.random() < self.prob_immunize:  # Will an Agent be resistant AND shares prebunking content?
                     self.next_opinion = 2
                     self.status = 'aR'
                 return
@@ -113,7 +114,7 @@ class Agent:
         """
         self.opinion_history.append(self.opinion)
         self.opinion = self.next_opinion
-        if self.dark:
+        if self.dark or self.prebunk:
             return
         # Update sharing behaviour
         if self.opinion == 0:
@@ -138,6 +139,7 @@ class Agent:
                 share=self.share,
                 resistance=self.resistance,
                 dark=self.dark,
+                prebunk=self.prebunk,
             )
         )
 
@@ -186,7 +188,7 @@ class Agent:
                     self.share()
             case 2: # Scenario 3: Frequency decreases over 5 steps, each step 2 ticks long (50, 40 ,30, 20, 10) Times
                 frequency_values = [50, 50, 40, 40, 30, 30, 20, 20, 10, 10]
-                if tick < len(frequency_values) + start:
+                if start <= tick < len(frequency_values) + start:
                     actual_value = frequency_values[tick - start]
                     self.frequency = actual_value
                 else:
@@ -220,3 +222,4 @@ class Agent:
             self.frequency = 1
             self.resistance = True
             self.dark = False
+            self.prebunk = True

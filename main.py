@@ -1,5 +1,3 @@
-import datetime
-
 import numpy as np
 from runModel import run_model
 import pandas as pd
@@ -24,7 +22,7 @@ if __name__ == '__main__':
 
             for indifferent in np.arange(0, 1.1, 0.1):
                 prob_share_indifferent = round(indifferent, 1)
-                print('Prebunk:', prebunk, 'Immune:', immune, 'Indifferent:', prob_share_indifferent)
+                print('Prebunk:', prob_prebunk, 'Immune:', prob_immune, 'Indifferent:', prob_share_indifferent)
                 for disinfo in np.arange(0, 1.1, 0.1):
                     prob_share_disinfo = round(disinfo, 1)
                     print('Disinfo:', prob_share_disinfo)
@@ -49,8 +47,6 @@ if __name__ == '__main__':
                         formatted_prob_prebunk = str(prob_prebunk).replace('.', '_')
                         formatted_prob_immune = str(prob_immune).replace('.', '_')
 
-
-
                         # Start the model
                         for _ in range(100):
                             end_result, shares_result, status_result = run_model(
@@ -68,7 +64,7 @@ if __name__ == '__main__':
 
                                 prob_prebunk=prob_prebunk,
                                 prob_immune=prob_immune,
-                                draw = False,
+                                draw=False,
                                 verbose=False,
                                 dry_run=dry_run,
                                 custom_title=f"Example model with attack scenario I, P(r)= {prob_prebunk} and P(v)= {prob_immune}",
@@ -92,7 +88,7 @@ if __name__ == '__main__':
 
                         if not dry_run:
                             end_result = pd.DataFrame(dict(
-                                attack_start= attack_start,
+                                attack_start=attack_start,
                                 attack_kind=attack_kind,
                                 prob_prebunk=prob_prebunk,
                                 prob_immune=prob_immune,
@@ -101,14 +97,22 @@ if __name__ == '__main__':
                                 prob_share_facts=prob_share_facts,
                                 s=np.mean(end_result_s, axis=0),
                                 i=np.mean(end_result_i, axis=0),
-                                r=np.mean(end_result_r, axis=0)
+                                r=np.mean(end_result_r, axis=0),
+                                s_shares=[np.mean(shares_result_s, axis=0)],
+                                i_shares=[np.mean(shares_result_i, axis=0)],
+                                r_shares=[np.mean(shares_result_r, axis=0)],
+                                s_status=[np.mean(status_result_s, axis=0)],
+                                i_status=[np.mean(status_result_i, axis=0)],
+                                r_status=[np.mean(status_result_r, axis=0)],
+                                ar_status=[np.mean(status_result_ar, axis=0)],
+                                ui_status=[np.mean(status_result_ui, axis=0)],
                             ), index=[0])
 
                             shares_result = pd.DataFrame(dict(
-                                attack_start = attack_start,
-                                attack_kind = attack_kind,
-                                prebunk_prob = prob_prebunk,
-                                prob_immune = prob_immune,
+                                attack_start=attack_start,
+                                attack_kind=attack_kind,
+                                prebunk_prob=prob_prebunk,
+                                prob_immune=prob_immune,
                                 prob_share_indifferent=prob_share_indifferent,
                                 prob_share_disinfo=prob_share_disinfo,
                                 prob_share_facts=prob_share_facts,
@@ -136,20 +140,20 @@ if __name__ == '__main__':
                             store_shares_result = pd.concat([store_shares_result, shares_result])
                             store_status_result = pd.concat([store_status_result, status_result])
 
-                        if not store_end_result.empty:
-                            store_end_result.to_csv(
-                                f"end_result_atk{formatted_attack_kind}_pre{formatted_prob_prebunk}_imu{formatted_prob_immune}.csv",
-                                index=False)  # Saves file without the index column
-                        if not store_shares_result.empty:
-                            store_shares_result.to_csv(
-                                f"shares_result_atk{formatted_attack_kind}_pre{formatted_prob_prebunk}_imu{formatted_prob_immune}.csv",
-                                index=False)  # Saves file without the index column
+            if not store_end_result.empty:
+                store_end_result.to_csv(
+                    f"end_result_atk{formatted_attack_kind}_pre{formatted_prob_prebunk}_imu{formatted_prob_immune}.csv",
+                    index=False)  # Saves file without the index column
+            if not store_shares_result.empty:
+                store_shares_result.to_csv(
+                    f"shares_result_atk{formatted_attack_kind}_pre{formatted_prob_prebunk}_imu{formatted_prob_immune}.csv",
+                    index=False)  # Saves file without the index column
 
-                        if not store_status_result.empty:
-                            store_status_result.to_csv(
-                                f"status_result_atk{formatted_attack_kind}_pre{formatted_prob_prebunk}_imu{formatted_prob_immune}.csv",
-                                index=False)  # Saves file without the index column
+            if not store_status_result.empty:
+                store_status_result.to_csv(
+                    f"status_result_atk{formatted_attack_kind}_pre{formatted_prob_prebunk}_imu{formatted_prob_immune}.csv",
+                    index=False)  # Saves file without the index column
 
-    print('Saving complete for attack kind:', attack_kind,'.')
+    print('Saving complete for attack kind:', attack_kind, '.')
 
     print("Done.")

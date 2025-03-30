@@ -126,9 +126,9 @@ def run_model(
     dark_quantile: (float)
         percentile of in-degrees of edges that determines which node is the dark agent
     prob_prebunk: (float)
-        a node's probability to become a prebunking agent themselves
-    prob_immune: (float)
         a node's probability to change their status to resistant
+    prob_immune: (float)
+        a node's probability to become a prebunking agent themselves
     draw: (bool)
         after the simulation concluded, should a plot be created?
     verbose: (bool)
